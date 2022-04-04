@@ -44,7 +44,7 @@
 /* Count */
 .count {
   position: absolute;
-  top: -50px;
+  top: -70px;
   left: 20px;
   font-size: 0.8rem;
   color: white;
@@ -72,6 +72,8 @@
   fill: none;
   stroke: #27ae60;
   stroke-width: 2px;
+  margin-top: 5px;
+  margin-left: 3px;
 }
 
 .icon.checked {
