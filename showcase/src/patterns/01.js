@@ -5,22 +5,28 @@ import styles from './index.css';
 const initialState = {
   count: 0,
   countTotal: 267,
+  isClicked: false,
 };
 
 const MediumClap = () => {
+  const MAXIMUM_USER_CLAP = 12;
   const [clapState, setClapState] = useState(initialState);
-  const { count, countTotal } = clapState;
+  const { count, countTotal, isClicked } = clapState;
 
   const handleClapClick = () => {
-    setClapState((prevState) => ({
-      count: prevState.count + 1,
-      countTotal: prevState.countTotal + 1,
-    }));
+    setClapState({
+      isClicked: true,
+      count: Math.min(count + 1, MAXIMUM_USER_CLAP),
+      countTotal:
+        count < MAXIMUM_USER_CLAP
+          ? countTotal + 1
+          : countTotal,
+    });
   };
 
   return (
     <button className={styles.clap} onClick={handleClapClick}>
-      <ClapIcon />
+      <ClapIcon isClicked={isClicked} />
       <ClapCount count={count} />
       <ClapTotal countTotal={countTotal} />
     </button>
@@ -31,8 +37,8 @@ const MediumClap = () => {
  * Sub Components
  */
 
-const ClapIcon = () => {
-  return <Clap className={styles.icon} />;
+const ClapIcon = ({ isClicked }) => {
+  return <Clap className={`${styles.icon} ${isClicked && styles.checked}`} />;
 };
 
 const ClapCount = ({ count }) => {
