@@ -112,6 +112,7 @@ const MediumClap = ({ animationTimeline }) => {
 
   const handleClapClick = () => {
     animationTimeline.replay();
+    console.log(animationTimeline);
     setClapState({
       isClicked: true,
       count: Math.min(count + 1, MAXIMUM_USER_CLAP),

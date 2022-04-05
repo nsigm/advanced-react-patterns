@@ -110,9 +110,9 @@ const MediumClap = () => {
  
   const setRef = useCallback(node => {
     if(node !== null) {
-      setRefState((prevRefState) => ({
+      setRefState(prevRefState => ({
         ...prevRefState,
-        [node.dataset.refKey]: node,
+        [node.dataset.refkey]: node,
       }));
     }
   }, []);
@@ -143,7 +143,7 @@ const MediumClap = () => {
     >
       <ClapIcon isClicked={isClicked} />
       <ClapCount count={count} setRef={setRef} />
-      <ClapTotal countTotal={countTotal} setRef={setRef} />
+      <CountTotal countTotal={countTotal} setRef={setRef} />
     </button>
   );
 };
@@ -164,7 +164,7 @@ const ClapCount = ({ count, setRef }) => {
   );
 };
 
-const ClapTotal = ({ countTotal, setRef }) => {
+const CountTotal = ({ countTotal, setRef }) => {
   return (
     <span ref={setRef} data-refkey="clapTotalRef" className={styles.total}>
       {countTotal}
