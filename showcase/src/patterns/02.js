@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useLayoutEffect, useState, useCallback } from 'react';
 import mojs from 'mo-js';
 import Clap from '../assets/clap.svg';
 import styles from './index.css';
@@ -17,7 +17,11 @@ const useClapAnimation = ({ clapEl, countEl, clapTotalEl }) => {
     () => new mojs.Timeline()
   );
 
-  useEffect(() => {
+  useLayoutEffect(() => {
+    if( !clapEl || !countEl || !clapTotalEl ) {
+      return
+    }
+
     const tlDuration = 300;
     const scaleButton = new mojs.Html({
       el: clapEl,
@@ -92,7 +96,7 @@ const useClapAnimation = ({ clapEl, countEl, clapTotalEl }) => {
       circleBurst,
     ]);
     setAnimationTimeline(newAnimationTimeline);
-  }, []);
+  }, [clapEl, countEl, clapTotalEl]);
   return animationTimeline;
 };
 
@@ -102,12 +106,14 @@ const MediumClap = () => {
   const { count, countTotal, isClicked } = clapState;
 
   const [{ clapRef, clapCountRef, clapTotalRef }, setRefState] = useState({});
+ 
   const setRef = useCallback((node) => {
     setRefState((prevRefState) => ({
       ...prevRefState,
       [node.dataset.refKey]: node,
     }));
   }, []);
+  
   const animationTimeline = useClapAnimation({
     clapEl: clapRef,
     countEl: clapCountRef,
