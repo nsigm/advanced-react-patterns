@@ -3,18 +3,12 @@ import mojs from 'mo-js';
 import Clap from '../assets/clap.svg';
 import styles from './index.css';
 
-const initialState = {
-  count: 0,
-  countTotal: 267,
-  isClicked: false,
-};
-
 /**
  * Custom Hook for animation
  */
-const useClapAnimation = ({ clapEl, countEl, clapTotalEl }) => {
+const useClapAnimation = ({ duration: tlDuration, clapEl, countEl, clapTotalEl }) => {
   const [animationTimeline, setAnimationTimeline] = useState(
-    () => new mojs.Timeline()
+    new mojs.Timeline()
   );
 
   useLayoutEffect(() => {
@@ -22,7 +16,6 @@ const useClapAnimation = ({ clapEl, countEl, clapTotalEl }) => {
       return
     }
 
-    const tlDuration = 300;
     const scaleButton = new mojs.Html({
       el: clapEl,
       duration: tlDuration,
@@ -88,16 +81,24 @@ const useClapAnimation = ({ clapEl, countEl, clapTotalEl }) => {
       clapEl.style.transform = 'scale(1,1)';
     }
 
-    const newAnimationTimeline = animationTimeline.add([
+    const updatedAnimationTimeline = animationTimeline.add([
       scaleButton,
       countTotalAnimation,
       countAnimation,
       triangleBurst,
       circleBurst,
     ]);
-    setAnimationTimeline(newAnimationTimeline);
-  }, [clapEl, countEl, clapTotalEl]);
+
+    setAnimationTimeline(updatedAnimationTimeline);
+  }, [tlDuration, animationTimeline, clapEl, countEl, clapTotalEl]);
+
   return animationTimeline;
+};
+
+const initialState = {
+  count: 0,
+  countTotal: 267,
+  isClicked: false,
 };
 
 const MediumClap = () => {
@@ -107,14 +108,17 @@ const MediumClap = () => {
 
   const [{ clapRef, clapCountRef, clapTotalRef }, setRefState] = useState({});
  
-  const setRef = useCallback((node) => {
-    setRefState((prevRefState) => ({
-      ...prevRefState,
-      [node.dataset.refKey]: node,
-    }));
+  const setRef = useCallback(node => {
+    if(node !== null) {
+      setRefState((prevRefState) => ({
+        ...prevRefState,
+        [node.dataset.refKey]: node,
+      }));
+    }
   }, []);
   
   const animationTimeline = useClapAnimation({
+    duration: 300,
     clapEl: clapRef,
     countEl: clapCountRef,
     clapTotalEl: clapTotalRef,
@@ -122,6 +126,7 @@ const MediumClap = () => {
 
   const handleClapClick = () => {
     animationTimeline.replay();
+
     setClapState({
       isClicked: true,
       count: Math.min(count + 1, MAXIMUM_USER_CLAP),
@@ -153,7 +158,7 @@ const ClapIcon = ({ isClicked }) => {
 
 const ClapCount = ({ count, setRef }) => {
   return (
-    <span ref={setRef} className={styles.count}>
+    <span ref={setRef} data-refkey="clapCountRef" className={styles.count}>
       + {count}
     </span>
   );
@@ -161,7 +166,7 @@ const ClapCount = ({ count, setRef }) => {
 
 const ClapTotal = ({ countTotal, setRef }) => {
   return (
-    <span ref={setRef} className={styles.total}>
+    <span ref={setRef} data-refkey="clapTotalRef" className={styles.total}>
       {countTotal}
     </span>
   );
