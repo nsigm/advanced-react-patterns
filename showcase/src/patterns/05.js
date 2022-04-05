@@ -110,11 +110,13 @@ const useClapAnimation = ({
   return animationTimeline;
 };
 
-const initialState = {
+const INITIAL_STATE = {
   count: 0,
   countTotal: 267,
   isClicked: false,
 };
+
+const MAXIMUM_USER_CLAP = 12;
 
 const MediumClapContext = createContext();
 const { Provider } = MediumClapContext;
@@ -126,8 +128,7 @@ const MediumClap = ({
   style: userStyles = {},
   className,
 }) => {
-  const MAXIMUM_USER_CLAP = 12;
-  const [clapState, setClapState] = useState(initialState);
+  const [clapState, setClapState] = useState(INITIAL_STATE);
   const { count, countTotal, isClicked } = clapState;
 
   const [{ clapRef, clapCountRef, clapTotalRef }, setRefState] = useState({});
@@ -168,11 +169,10 @@ const MediumClap = ({
         });
   };
 
-  const getState = useCallback(() => (isControlled ? values : clapState), [
-    isControlled,
-    values,
-    clapState
-  ]);
+  const getState = useCallback(
+    () => (isControlled ? values : clapState),
+    [isControlled, values, clapState]
+  );
 
   const memoizedValue = useMemo(
     () => ({
@@ -252,19 +252,36 @@ MediumClap.Total = CountTotal;
  */
 
 const Usage = () => {
-  const [count, setCount] = useState(0);
-  const handleClap = (clapState) => {
-    setCount(clapState.count);
+  const [state, setState] = useState(INITIAL_STATE);
+  const handleClap = () => {
+    setState(({ count, countTotal }) => ({
+      count: Math.min(count + 1, MAXIMUM_USER_CLAP),
+      countTotal: count < MAXIMUM_USER_CLAP ? countTotal + 1 : countTotal,
+      isClicked: true,
+    }));
   };
 
   return (
     <div style={{ width: '100' }}>
-      <MediumClap onClap={handleClap} className={userCustomStyles.clap}>
+      <MediumClap
+        values={state}
+        onClap={handleClap}
+        className={userCustomStyles.clap}
+      >
         <MediumClap.Icon className={userCustomStyles.icon} />
         <MediumClap.Count className={userCustomStyles.count} />
         <MediumClap.Total className={userCustomStyles.total} />
       </MediumClap>
-      <div>{`You have clapped ${count}`}</div>
+      <MediumClap
+        values={state}
+        onClap={handleClap}
+        className={userCustomStyles.clap}
+      >
+        <MediumClap.Icon className={userCustomStyles.icon} />
+        <MediumClap.Count className={userCustomStyles.count} />
+        <MediumClap.Total className={userCustomStyles.total} />
+      </MediumClap>
+      <div>{`You have clapped ${state.count}`}</div>
     </div>
   );
 };
