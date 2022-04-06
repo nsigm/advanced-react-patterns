@@ -130,6 +130,12 @@ const useDOMRef = () => {
   return [DOMRef, setRef];
 };
 
+// const handleClick = (evt) => { ... }
+// <button onClick={handleClick} />
+const callFnsInSequence = (...fns) => (...args) => {
+  fns.forEach(fn => fn && fn(...args))
+};
+
 /*
  * useClapState custom Hook
  */
@@ -147,21 +153,21 @@ const useClapState = (initialState = INITIAL_STATE) => {
     }));
   }, [count, countTotal]);
 
-  // props collection for "click"
-  const togglerProps = {
-    onClick: updateClapState,
+  const getTogglerProps = ({ onClick, ...otherProps } = {}) => ({
+    onClick: callFnsInSequence(updateClapState, onClick),
     'aria-pressed': clapState.isClicked,
-  };
+    ...otherProps,
+  });
 
-  // props collection for "count"
-  const counterProps = {
+  const getCounterProps = ({ ...otherProps }) => ({
     count,
     'aria-valuemax': MAXIMUM_USER_CLAP,
     'aria_valuemin': 0,
     'aria_valuenow': count,
-  };
+    ...otherProps,
+  });
 
-  return {clapState, updateClapState, togglerProps, counterProps}
+  return { clapState, updateClapState, getTogglerProps, getCounterProps };
 };
 
 /*
@@ -191,7 +197,7 @@ const ClapContainer = ({ children, setRef, handleClick, ...restProps }) => {
     >
       {children}
     </button>
-  ); 
+  );
 };
 
 const ClapIcon = ({ isClicked }) => {
@@ -219,10 +225,11 @@ const CountTotal = ({ countTotal, setRef, ...restProps }) => {
  */
 
 const Usage = () => {
-  const {clapState, togglerProps, counterProps} = useClapState();
+  const { clapState, getTogglerProps, getCounterProps } = useClapState();
   const { count, countTotal, isClicked } = clapState;
 
-  const [{ clapContainerRef, clapCountRef, clapTotalRef }, setRef] = useDOMRef();
+  const [{ clapContainerRef, clapCountRef, clapTotalRef }, setRef] =
+    useDOMRef();
 
   const animationTimeline = useClapAnimation({
     duration: 300,
@@ -235,10 +242,25 @@ const Usage = () => {
     animationTimeline.replay();
   }, [count]);
 
+  const handleClick = () => {
+    console.log('clicked!!!');
+  };
+
   return (
-    <ClapContainer setRef={setRef} data-refkey="clapContainerRef" {...togglerProps}>
+    <ClapContainer
+      setRef={setRef}
+      data-refkey="clapContainerRef"
+      {...getTogglerProps({
+        onClick: handleClick,
+        'aria-pressed': false,
+      })}
+    >
       <ClapIcon isClicked={isClicked} />
-      <ClapCount setRef={setRef} data-refkey="clapCountRef" {...counterProps} />
+      <ClapCount
+        setRef={setRef}
+        data-refkey="clapCountRef"
+        {...getCounterProps()}
+      />
       <CountTotal
         countTotal={countTotal}
         setRef={setRef}
