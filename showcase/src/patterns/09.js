@@ -140,6 +140,17 @@ const callFnsInSequence =
   };
 
 /*
+ * usePrevious Hook
+ */
+function usePrevious(value) {
+  const ref = useRef();
+  useEffect(() => {
+    ref.current = value;
+  });
+  return ref.current === undefined ? null : ref.current;
+}
+
+/*
  * useClapState custom Hook
  */
 
@@ -157,9 +168,15 @@ const useClapState = (initialState = INITIAL_STATE) => {
     }));
   }, [count, countTotal]);
 
+  // glorified counter
+  const resetRef = useRef(0);
+  const prevCount = usePrevious(count);
   const reset = useCallback(() => {
-    setClapState(userInitialState.current);
-  }, [setClapState]);
+    if (prevCount !== count) {
+      setClapState(userInitialState.current);
+      resetRef.current++;
+    }
+  }, [prevCount, count, setClapState]);
 
   const getTogglerProps = ({ onClick, ...otherProps } = {}) => ({
     onClick: callFnsInSequence(updateClapState, onClick),
@@ -181,6 +198,7 @@ const useClapState = (initialState = INITIAL_STATE) => {
     getTogglerProps,
     getCounterProps,
     reset,
+    resetDep: resetRef.current,
   };
 };
 
@@ -244,7 +262,7 @@ const userInitialState = {
 };
 
 const Usage = () => {
-  const { clapState, getTogglerProps, getCounterProps, reset } =
+  const { clapState, getTogglerProps, getCounterProps, reset, resetDep } =
     useClapState(userInitialState);
   const { count, countTotal, isClicked } = clapState;
 
@@ -262,12 +280,22 @@ const Usage = () => {
     animationTimeline.replay();
   }, [count]);
 
+  const [uploadingReset, setUploadingReset] = useState(false);
+  useEffectAfterMount(() => {
+    setUploadingReset(true);
+    const id = setTimeout(() => {
+      setUploadingReset(false);
+    }, 3000);
+
+    return () => clearTimeout(id);
+  }, [resetDep]);
+
   const handleClick = () => {
     console.log('clicked!!!');
   };
 
   return (
-    <div style={{textAlign: 'center'}}>
+    <div style={{ textAlign: 'center' }}>
       <ClapContainer
         setRef={setRef}
         data-refkey="clapContainerRef"
@@ -294,6 +322,9 @@ const Usage = () => {
         </button>
         <pre className={userStyles.resetMsg}>
           {JSON.stringify({ count, countTotal, isClicked })}
+        </pre>
+        <pre className={userStyles.resetMsg}>
+          {uploadingReset ? `uploading reset ${resetDep} ...` : ''}
         </pre>
       </section>
     </div>
