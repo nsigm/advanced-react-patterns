@@ -155,7 +155,7 @@ function usePrevious(value) {
  * useClapState custom Hook
  */
 const MAXIMUM_USER_CLAP = 12;
-const reducer = ({ count, countTotal }, { type, payload }) => {
+const internalReducer = ({ count, countTotal }, { type, payload }) => {
   switch (type) {
     case 'clap':
       return {
@@ -169,7 +169,10 @@ const reducer = ({ count, countTotal }, { type, payload }) => {
       break;
   }
 };
-const useClapState = (initialState = INITIAL_STATE) => {
+const useClapState = (
+  initialState = INITIAL_STATE,
+  reducer = internalReducer
+) => {
   const userInitialState = useRef(initialState);
   const [clapState, dispatch] = useReducer(reducer, initialState);
   const { count, countTotal } = clapState;
@@ -270,8 +273,22 @@ const userInitialState = {
 };
 
 const Usage = () => {
+  const reducer = ({ count, countTotal }, { type, payload }) => {
+    switch (type) {
+      case 'clap':
+        return {
+          isClicked: true,
+          count: Math.min(count + 1, MAXIMUM_USER_CLAP),
+          countTotal: count < MAXIMUM_USER_CLAP ? countTotal + 1 : countTotal,
+        };
+      case 'reset':
+        return payload;
+      default:
+        break;
+    }
+  };
   const { clapState, getTogglerProps, getCounterProps, reset, resetDep } =
-    useClapState(userInitialState);
+    useClapState(userInitialState, reducer);
   const { count, countTotal, isClicked } = clapState;
 
   const [{ clapContainerRef, clapCountRef, clapTotalRef }, setRef] =
