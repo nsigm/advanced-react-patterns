@@ -154,7 +154,7 @@ function usePrevious(value) {
 /*
  * useClapState custom Hook
  */
-const MAXIMUM_USER_CLAP = 12;
+const MAXIMUM_USER_CLAP = 30;
 const internalReducer = ({ count, countTotal }, { type, payload }) => {
   switch (type) {
     case 'clap':
@@ -181,13 +181,10 @@ const useClapState = (
 
   // glorified counter
   const resetRef = useRef(0);
-  const prevCount = usePrevious(count);
   const reset = useCallback(() => {
-    if (prevCount !== count) {
       dispatch({ type: 'reset', payload: userInitialState.current });
       resetRef.current++;
-    }
-  }, [prevCount, count]);
+  }, []);
 
   const getTogglerProps = ({ onClick, ...otherProps } = {}) => ({
     onClick: callFnsInSequence(updateClapState, onClick),
@@ -212,7 +209,12 @@ const useClapState = (
     resetDep: resetRef.current,
   };
 };
-
+//useClapState, internalReducer
+useClapState.reducer = internalReducer;
+useClapState.types = {
+  clap: 'clap',
+  reset: 'reset',
+};
 /*
  * useEffectAfterMount custom Hook
  */
@@ -273,19 +275,14 @@ const userInitialState = {
 };
 
 const Usage = () => {
-  const reducer = ({ count, countTotal }, { type, payload }) => {
-    switch (type) {
-      case 'clap':
-        return {
-          isClicked: true,
-          count: Math.min(count + 1, MAXIMUM_USER_CLAP),
-          countTotal: count < MAXIMUM_USER_CLAP ? countTotal + 1 : countTotal,
-        };
-      case 'reset':
-        return payload;
-      default:
-        break;
+  const [timesClapped, setTimesClapped] = useState(0)
+  const isClappedTooMuch = timesClapped >= 7
+
+  const reducer = (state, action) => {
+    if(action.type === useClapState.types.clap && isClappedTooMuch) {
+      return state;
     }
+    return useClapState.reducer(state, action);
   };
   const { clapState, getTogglerProps, getCounterProps, reset, resetDep } =
     useClapState(userInitialState, reducer);
@@ -301,13 +298,16 @@ const Usage = () => {
     clapTotalEl: clapTotalRef,
   });
 
-  useEffectAfterMount(() => {
-    animationTimeline.replay();
-  }, [count]);
+  const handleClick = () => {
+    setTimesClapped(t => t + 1)
+      !isClappedTooMuch && animationTimeline.replay()
+  };
 
   const [uploadingReset, setUploadingReset] = useState(false);
   useEffectAfterMount(() => {
+    setTimesClapped(0)
     setUploadingReset(true);
+
     const id = setTimeout(() => {
       setUploadingReset(false);
     }, 3000);
@@ -315,9 +315,7 @@ const Usage = () => {
     return () => clearTimeout(id);
   }, [resetDep]);
 
-  const handleClick = () => {
-    console.log('clicked!!!');
-  };
+
 
   return (
     <div style={{ textAlign: 'center' }}>
@@ -342,14 +340,17 @@ const Usage = () => {
         />
       </ClapContainer>
       <section>
-        <button onClick={reset} className={userStyles.resetBtn}>
+        <button onClick={reset} className={userStyles.resetBtn} disabled={uploadingReset}>
           reset
         </button>
         <pre className={userStyles.resetMsg}>
-          {JSON.stringify({ count, countTotal, isClicked })}
+          {JSON.stringify({ timesClapped, count, countTotal })}
         </pre>
         <pre className={userStyles.resetMsg}>
           {uploadingReset ? `uploading reset ${resetDep} ...` : ''}
+        </pre>
+        <pre>
+          {isClappedTooMuch ? 'You clapped too much...' : ''}
         </pre>
       </section>
     </div>
